@@ -1,18 +1,21 @@
 package zhipu
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"math"
+	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
+	"github.com/songquanpeng/one-api/common/ctxkey"
 	"github.com/songquanpeng/one-api/relay/adaptor"
 	"github.com/songquanpeng/one-api/relay/adaptor/openai"
 	"github.com/songquanpeng/one-api/relay/meta"
 	"github.com/songquanpeng/one-api/relay/model"
 	"github.com/songquanpeng/one-api/relay/relaymode"
-	"io"
-	"math"
-	"net/http"
-	"strings"
 )
 
 type Adaptor struct {
@@ -74,6 +77,21 @@ func (a *Adaptor) ConvertRequest(c *gin.Context, relayMode int, request *model.G
 		request.Temperature = math.Max(0.01, request.Temperature)
 		a.SetVersionByModeName(request.Model)
 		if a.APIVersion == "v4" {
+			// 兼容glm4 tools，原型使用tools
+			var bodyData model.GeneralZhiPuAIRequest
+			requestBody, ok := c.Get(ctxkey.KeyRequestBody)
+			contentType := c.Request.Header.Get("Content-Type")
+			if ok && strings.HasPrefix(contentType, "application/json") {
+				json.Unmarshal(requestBody.([]byte), &bodyData)
+			}
+			Tools := bodyData.Tools
+			if len(Tools) > 0 {
+				requestData := &model.GeneralZhiPuAIRequest{
+					Tools:                Tools,
+					GeneralOpenAIRequest: *request,
+				}
+				return requestData, nil
+			}
 			return request, nil
 		}
 		return ConvertRequest(*request), nil

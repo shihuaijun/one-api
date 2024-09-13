@@ -29,7 +29,7 @@ type GeneralOpenAIRequest struct {
 	Dimensions       int             `json:"dimensions,omitempty"`
 	Instruction      string          `json:"instruction,omitempty"`
 	Size             string          `json:"size,omitempty"`
-	NumCtx           int         	 `json:"num_ctx,omitempty"`
+	NumCtx           int             `json:"num_ctx,omitempty"`
 }
 
 func (r GeneralOpenAIRequest) ParseInput() []string {
@@ -49,4 +49,9 @@ func (r GeneralOpenAIRequest) ParseInput() []string {
 		}
 	}
 	return input
+}
+
+type GeneralZhiPuAIRequest struct {
+	Tools []ZhiPuTool `json:"tools,omitempty"`
+	GeneralOpenAIRequest
 }
